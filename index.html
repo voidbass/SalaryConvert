@@ -1,0 +1,454 @@
+﻿<html>
+  <head>
+    <!--Import materialize.css-->
+    <link
+      type="text/css"
+      rel="stylesheet"
+      href="css/materialize.css"
+      media="screen,projection"
+    />
+    <title>Salary Converter</title>
+    <!--Let browser know website is optimized for mobile-->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <style>
+      body {
+        display: flex;
+        min-height: 100vh;
+        flex-direction: column;
+      }
+
+      table th,
+      td {
+        text-align: right;
+        padding: 10px 5px;
+      }
+    </style>
+  </head>
+
+  <body ng-app="app">
+    <nav class="purple lighten-3" role="navigation">
+      <div class="nav-wrapper container">
+        <a id="logo-container" href="#" class="brand-logo center"
+          >Voidbass Convert Salary</a
+        >
+      </div>
+    </nav>
+    <div id="index-banner" class="container">
+      <div class="section no-pad-bot">
+        <div class="container">
+          <h1 class="header center teal-text text-accent-3">
+            Salary Converter
+          </h1>
+          <div class="row center">
+            <h5 class="header col s12 light">
+              Chuyển lương từ Gross sang Net và ngược lại
+            </h5>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div ng-controller="MyCtrl" class="container">
+      <div class="row">
+        <h5 class="light-blue-text text-lighten-1">Thu nhập</h5>
+        <div class="input-field col s4">
+          <input step="100000" type="number" ng-model="vnd" id="vnd" />
+          <label for="vnd">VND</label>
+        </div>
+        <div class="input-field col s4">
+          <input step="10" type="number" ng-model="usd" id="usd" />
+          <label for="usd">USD</label>
+        </div>
+        <div class="input-field col s4">
+          <input step="10" type="number" ng-model="RATIO" id="ratio" /> 1 USD =
+          ... VND
+          <label for="ratio">Tỉ giá</label>
+        </div>
+      </div>
+      <div class="row">
+        <h5 class="light-blue-text text-lighten-1">Bảo hiểm</h5>
+        <div class="input-field col s3">
+          <input step="50000" type="number" ng-model="MIN_SALARY" id="min" />
+          VND
+          <label for="min">Lương tối thiểu</label>
+        </div>
+        <div class="input-field col s3">
+          <input type="number" ng-model="SOCIAL" id="social" /> %
+          <label for="social">Xã hội</label>
+        </div>
+        <div class="input-field col s3">
+          <input type="number" ng-model="HEALTH" id="health" /> %
+          <label for="health">Y tế</label>
+        </div>
+        <div class="input-field col s3">
+          <input type="number" ng-model="UNEMPLOY" id="unem" /> %
+          <label for="unem">Thất nghiệp</label>
+        </div>
+      </div>
+      <div class="row">
+        <h5 class="light-blue-text text-lighten-1">Giảm trừ gia cảnh</h5>
+        <div class="input-field col s4">
+          <input
+            step="50000"
+            type="number"
+            ng-model="PERSONAL_REDUCE"
+            id="personal"
+          />
+          VND
+          <label for="personal">Cá nhân</label>
+        </div>
+        <div class="input-field col s4">
+          <input
+            step="50000"
+            type="number"
+            ng-model="DEPENDANT_REDUCE"
+            id="dep"
+          />
+          VND
+          <label for="dep">Phụ thuộc</label>
+        </div>
+        <div class="input-field col s4">
+          <input type="number" ng-model="dependants" id="depNum" />
+          <label for="depNum">Số người phụ thuộc</label>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="center">
+          <button
+            ng-click="grossToNet()"
+            class="btn btn-large waves-effect waves-light"
+          >
+            GROSS => NET
+          </button>
+          <button
+            ng-click="netToGross()"
+            class="btn btn-large waves-effect waves-light"
+          >
+            NET => GROSS
+          </button>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="right" style="text-align: right;">
+          <h4 class="red-text text-darken-2">
+            GROSS : {{grossSalary | number:0}} (VND) ≈ {{grossSalary / RATIO |
+            number:0}} (USD)
+          </h4>
+          <h4 class="red-text text-darken-2">
+            NET : {{netSalary | number:0}} (VND) ≈ {{netSalary / RATIO |
+            number:0}} (USD)
+          </h4>
+        </div>
+      </div>
+
+      <div class="row">
+        <h5 class="light-blue-text text-lighten-1">Diễn giải chi tiết (VND)</h5>
+
+        <table class="table bordered">
+          <tr>
+            <th>Lương GROSS</th>
+            <td>{{grossSalary | number:0}}</td>
+          </tr>
+          <tr>
+            <td>Bảo hiểm xã hội ({{SOCIAL}}%)</td>
+            <td>-{{socialInsurance | number:0}}</td>
+          </tr>
+          <tr>
+            <td>Bảo hiểm y tế ({{HEALTH}}%)</td>
+            <td>-{{healthInsurance | number:0}}</td>
+          </tr>
+          <tr>
+            <td>Bảo hiểm thất nghiệp ({{UNEMPLOY}}%)</td>
+            <td>-{{unemployInsurance | number:0}}</td>
+          </tr>
+          <tr>
+            <th>Thu nhập trước thuế</th>
+            <td>{{noTaxSalary | number:0}}</td>
+          </tr>
+          <tr>
+            <td>Giảm trừ gia cảnh bản thân</td>
+            <td>-{{PERSONAL_REDUCE | number:0}}</td>
+          </tr>
+          <tr>
+            <td>Giảm trừ gia cảnh người phụ thuộc</td>
+            <td>-{{dependantReduce | number:0}}</td>
+          </tr>
+          <tr>
+            <th>Thu nhập chịu thuế</th>
+            <td>{{taxSalary | number:0}}</td>
+          </tr>
+          <tr>
+            <th>Thuế thu nhập cá nhân (*)</th>
+            <td>-{{totalTax | number:0}}</td>
+          </tr>
+          <tr>
+            <td>
+              <b>Lương NET</b><br />
+              (Thu nhập trước thuế - Thuế thu nhập cá nhân)
+            </td>
+            <td>{{netSalary | number:0}}</td>
+          </tr>
+        </table>
+      </div>
+      <div class="row">
+        <h5 class="light-blue-text text-lighten-1">
+          Chi tiết thuế thu nhập cá nhân (VND)
+        </h5>
+        <table class="table bordered">
+          <tr>
+            <th>Mức chịu thuế</th>
+            <th>Thuế suất</th>
+            <th>Tiền nộp</th>
+          </tr>
+
+          <tr>
+            <td>Đến 5 triệu VND</td>
+            <td>5%</td>
+            <td>{{tax1 | number:0}}</td>
+          </tr>
+          <tr>
+            <td>Trên 5 triệu VND đến 10 triệu VND</td>
+            <td>10%</td>
+            <td>{{tax2 | number:0}}</td>
+          </tr>
+          <tr>
+            <td>Trên 10 triệu VND đến 18 triệu VND</td>
+            <td>15%</td>
+            <td>{{tax3 | number:0}}</td>
+          </tr>
+          <tr>
+            <td>Trên 18 triệu VND đến 32 triệu VND</td>
+            <td>20%</td>
+            <td>{{tax4 | number:0}}</td>
+          </tr>
+          <tr>
+            <td>Trên 32 triệu VND đến 52 triệu VND</td>
+            <td>25%</td>
+            <td>{{tax5 | number:0}}</td>
+          </tr>
+          <tr>
+            <td>Trên 52 triệu VND đến 80 triệu VND</td>
+            <td>30%</td>
+            <td>{{tax6 | number:0}}</td>
+          </tr>
+          <tr>
+            <td>Trên 80 triệu VND</td>
+            <td>35%</td>
+            <td>{{tax7 | number:0}}</td>
+          </tr>
+          <tr>
+            <th>Tổng thuế</th>
+            <td colspan="2">{{totalTax | number:0}}</td>
+          </tr>
+        </table>
+      </div>
+      <div class="row">
+        <h5 class="light-blue-text text-lighten-1">
+          Người lao động tự trả (VND)
+        </h5>
+        <table class="table bordered">
+          <tr>
+            <td>Bảo hiểm xã hội({{SOCIAL}}%)</td>
+            <td>{{employerSocialInsurance | number:0}}</td>
+          </tr>
+          <tr>
+            <td>Bảo hiểm y tế({{HEALTH}}%)</td>
+            <td>{{employerHealthInsurance | number:0}}</td>
+          </tr>
+          <tr>
+            <td>Bảo hiểm thất nghiệp({{UNEMPLOY}}%)</td>
+            <td>{{employerUnemployInsurance | number:0}}</td>
+          </tr>
+          <tr>
+            <th>Tổng cộng</th>
+            <td>{{employerTotal | number:0}}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <footer class="page-footer purple accent-1">
+      <div class="footer-copyright">
+        <div class="container">
+          Copyright by
+          <a class="light-green-text text-accent-3" href="#"
+            >Voidbass | Biti's</a
+          >
+        </div>
+      </div>
+    </footer>
+    <!--Import jQuery before materialize.js-->
+    <script type="text/javascript" src="js/jquery-2.1.4.js"></script>
+    <script type="text/javascript" src="js/materialize.js"></script>
+    <script type="text/javascript" src="js/angular.js"></script>
+
+    <script>
+      var app = angular.module("app", []);
+
+      app.controller("MyCtrl", [
+        "$scope",
+        function ($scope) {
+          //Constant
+          $scope.RATIO = 23202;
+          $scope.MIN_SALARY = 9000000;
+          $scope.AREA_MIN_SALARY = 3100000; //Tính bảo hiểm thất nghiệp
+          $scope.SOCIAL = 8;
+          $scope.HEALTH = 1.5;
+          $scope.UNEMPLOY = 1;
+
+          $scope.EMPLOYER_SOCIAL = 18;
+          $scope.EMPLOYER_HEALTH = 3;
+          $scope.EMPLOYER_UNEMPLOY = 1;
+
+          $scope.PERSONAL_REDUCE = 0;
+          $scope.DEPENDANT_REDUCE = 0;
+
+          //Variable
+          $scope.vnd = 10000000;
+          $scope.usd = 0;
+          $scope.dependants = 0;
+
+          //Output
+          $scope.grossSalary = 0;
+          $scope.netSalary = 0;
+
+          $scope.socialInsurance = 0;
+          $scope.healthInsurance = 0;
+          $scope.unemployInsurance = 0;
+          $scope.noTaxSalary = 0;
+          $scope.dependantReduce = 0;
+          $scope.taxSalary = 0;
+
+          $scope.tax1 = 0;
+          $scope.tax2 = 0;
+          $scope.tax3 = 0;
+          $scope.tax4 = 0;
+          $scope.tax5 = 0;
+          $scope.tax6 = 0;
+          $scope.tax7 = 0;
+          $scope.totalTax = 0;
+
+          $scope.employerSocialInsurance = 0;
+          $scope.employerHealthInsurance = 0;
+          $scope.employerUnemployInsurance = 0;
+          $scope.employerTotal = 0;
+
+          $scope.grossToNet = function () {
+            //First table
+            $scope.grossSalary = $scope.vnd + $scope.usd * $scope.RATIO;
+            $scope.socialInsurance =
+              (min($scope.grossSalary, $scope.MIN_SALARY * 20) *
+                $scope.SOCIAL) /
+              100;
+            $scope.healthInsurance =
+              (min($scope.grossSalary, $scope.MIN_SALARY * 20) *
+                $scope.HEALTH) /
+              100;
+            $scope.unemployInsurance =
+              (min($scope.grossSalary, $scope.AREA_MIN_SALARY * 20) *
+                $scope.UNEMPLOY) /
+              100;
+
+            $scope.noTaxSalary =
+              $scope.grossSalary -
+              $scope.socialInsurance -
+              $scope.healthInsurance -
+              $scope.unemployInsurance;
+            $scope.dependantReduce =
+              $scope.DEPENDANT_REDUCE * $scope.dependants;
+            $scope.taxSalary = max(
+              0,
+              $scope.noTaxSalary -
+                $scope.PERSONAL_REDUCE -
+                $scope.dependantReduce
+            );
+
+            //Tax
+            $scope.tax1 = (bound($scope.taxSalary, 0, 5000000) * 5) / 100;
+            $scope.tax2 =
+              (bound($scope.taxSalary, 5000000, 10000000) * 10) / 100;
+            $scope.tax3 =
+              (bound($scope.taxSalary, 10000000, 18000000) * 15) / 100;
+            $scope.tax4 =
+              (bound($scope.taxSalary, 18000000, 32000000) * 20) / 100;
+            $scope.tax5 =
+              (bound($scope.taxSalary, 32000000, 52000000) * 25) / 100;
+            $scope.tax6 =
+              (bound($scope.taxSalary, 52000000, 80000000) * 30) / 100;
+            $scope.tax7 =
+              (bound($scope.taxSalary, 80000000, 9999999999) * 35) / 100;
+
+            $scope.totalTax =
+              $scope.tax1 +
+              $scope.tax2 +
+              $scope.tax3 +
+              $scope.tax4 +
+              $scope.tax5 +
+              $scope.tax6 +
+              $scope.tax7;
+            $scope.netSalary = $scope.noTaxSalary - $scope.totalTax;
+
+            //Employer
+            $scope.employerSocialInsurance =
+              (min($scope.grossSalary, $scope.MIN_SALARY * 20) *
+                $scope.SOCIAL) /
+              100;
+            $scope.employerHealthInsurance =
+              (min($scope.grossSalary, $scope.MIN_SALARY * 20) *
+                $scope.HEALTH) /
+              100;
+            $scope.employerUnemployInsurance =
+              (min($scope.grossSalary, $scope.AREA_MIN_SALARY * 20) *
+                $scope.UNEMPLOY) /
+              100;
+            $scope.employerTotal =
+              $scope.employerSocialInsurance +
+              $scope.employerHealthInsurance +
+              $scope.employerUnemployInsurance;
+          };
+
+          $scope.netToGross = function () {
+            $scope.netSalary = 0;
+            $scope.oldVnd = $scope.vnd;
+            $scope.totalSalary = $scope.oldVnd + $scope.usd * $scope.RATIO;
+
+            while ($scope.netSalary < $scope.totalSalary) {
+              $scope.vnd += 5;
+              $scope.grossToNet();
+            }
+            $scope.vnd = $scope.oldVnd;
+          };
+
+          function min(first, second) {
+            if (first < second) {
+              return first;
+            }
+            return second;
+          }
+
+          function max(first, second) {
+            if (first > second) {
+              return first;
+            }
+            return second;
+          }
+
+          function bound(value, minimum, maximum) {
+            if (value >= maximum) {
+              return maximum - minimum;
+            } else if (value <= minimum) {
+              return 0;
+            } else {
+              return value - minimum;
+            }
+          }
+        },
+      ]);
+    </script>
+  </body>
+</html>
